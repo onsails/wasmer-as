@@ -4,6 +4,11 @@ version = "0.1.0"
 authors = ["Andrey Kuznetsov <fear@loathing.in>"]
 edition = "2018"
 license-file = "LICENSE"
+description = "Helpers to read and write memory in AssemblyScript wasm modules executing in wasmer-runtime"
+keywords = ["assemblyscript", "assembly-script", "wasm", "wasmer"]
+homepage = "https://github.com/onsails/wasmer-as"
+documentation = "https://github.com/onsails/wasmer-as"
+repository = "https://github.com/onsails/wasmer-as"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
