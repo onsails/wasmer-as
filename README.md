@@ -11,9 +11,10 @@ fn main() -> Result<(), Error> {
 
     let mut instance = instantiate(&wasm[..], &import_object)?;
 
-    let add_one: Func<(i32, i32), i32> = instance.func("add")?;
-
-    let value = add_one.call(42, 2)?;
+    let add: Func<(i32, i32), i32> = instance.func("add")?;
+    
+    // if add throws an exception abort is called
+    let value = add.call(42, 2)?;
 
     assert_eq!(value, 44);
 
