@@ -28,3 +28,39 @@ impl ASReader {
         }
     }
 }
+
+#[cfg(test)]
+#[macro_use]
+extern crate wasmer_runtime;
+
+#[cfg(test)]
+mod tests {
+    use super::ASReader;
+    use std::fs::File;
+    use std::io::prelude::*;
+    use wasmer_runtime::{imports, instantiate, Ctx, Func};
+
+    #[test]
+    fn read_strings() {
+        let mut file = File::open("get-string.wasm").expect("Failed to open wasm file");
+        let mut wasm: Vec<u8> = vec![];
+        file.read_to_end(&mut wasm).expect("Unnable to read wasm");
+
+        let import_object = imports! {
+            "env" => {
+                "abort" => func!(abort),
+            },
+        };
+        let instance = instantiate(&wasm[..], &import_object).expect("Unable to instantiate");
+        let get_string: Func<(), i32> = instance.func("getString").expect("Unable to export func");
+        let str_ptr = get_string.call().expect("Call failed");
+        let string = ASReader::read_string(str_ptr, instance.context().memory(0))
+            .expect("Unable to read string");
+        assert_eq!(string, "TheString");
+    }
+
+    #[allow(dead_code)]
+    fn abort(_ctx: &mut Ctx, _message: i32, _filename: i32, _line: i32, _col: i32) {
+        eprintln!("abort called");
+    }
+}
