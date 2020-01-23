@@ -41,7 +41,7 @@ impl ASReader {
             let output = std::alloc::alloc(
                 std::alloc::Layout::from_size_align(size, std::mem::align_of::<u8>()).unwrap(),
             );
-            let output: &mut [u8] = std::slice::from_raw_parts_mut(output, size);
+            let output: &mut [u8] = std::slice::from_raw_parts_mut(output, len * 3);
             let len = ucs2::decode(input, output)?;
             Ok(String::from_utf8_unchecked(output[..len].into()))
         }
