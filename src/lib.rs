@@ -1,21 +1,40 @@
 use wasmer_runtime::Memory;
 
+// TODO: impl Error
+#[derive(Debug)]
+pub enum Error {
+    Ucs2(ucs2::Error),
+    Mem(&'static str),
+}
+
+impl From<ucs2::Error> for Error {
+    fn from(err: ucs2::Error) -> Self {
+        Self::Ucs2(err)
+    }
+}
+
 pub struct ASReader;
 
 impl ASReader {
-    pub fn size(offset: usize, memory: &Memory) -> u32 {
+    pub fn size(offset: usize, memory: &Memory) -> Result<u32, Error> {
+        if offset < 2 {
+            return Err(Error::Mem("Offset is out of lower bound"));
+        }
+
         unsafe {
-            let ptr = memory.view::<u16>().as_ptr().add(offset);
+            let ptr = memory.view::<u16>().as_ptr().add(offset - 2);
             let ptr = ptr as *const u32;
-            let ptr = ptr.offset(-1);
-            *ptr
+            Ok(*ptr)
         }
     }
 
-    pub fn read_string(ptr: i32, memory: &Memory) -> Result<String, ucs2::Error> {
+    pub fn read_string(ptr: i32, memory: &Memory) -> Result<String, Error> {
         unsafe {
             let offset = (ptr >> 1) as usize;
-            let size = Self::size(offset, memory) as usize;
+            let size = Self::size(offset, memory)? as usize;
+            if offset + size >= memory.size().bytes().0 {
+                return Err(Error::Mem("Offset is out of upper bound"));
+            }
             let ptr = memory.view::<u16>().as_ptr().add(offset as usize) as *const u16;
             let len = size / std::mem::size_of::<u16>();
             let input: &[u16] = std::slice::from_raw_parts(ptr, len);
