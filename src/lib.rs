@@ -18,7 +18,7 @@ pub struct ASReader;
 impl ASReader {
     pub fn size(offset: usize, memory: &Memory) -> Result<u32, Error> {
         if offset < 2 {
-            return Err(Error::Mem("Offset is out of lower bound"));
+            return Err(Error::Mem("Offset is out of the lower bound"));
         }
 
         unsafe {
@@ -33,7 +33,7 @@ impl ASReader {
             let offset = (ptr >> 1) as usize;
             let size = Self::size(offset, memory)? as usize;
             if offset + size >= memory.size().bytes().0 {
-                return Err(Error::Mem("Offset is out of upper bound"));
+                return Err(Error::Mem("Offset is out of the upper bound"));
             }
             let ptr = memory.view::<u16>().as_ptr().add(offset as usize) as *const u16;
             let len = size / std::mem::size_of::<u16>();
