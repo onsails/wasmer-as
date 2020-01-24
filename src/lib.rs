@@ -1,17 +1,5 @@
+use std::fmt;
 use wasmer_runtime::{Array, Memory, WasmPtr};
-
-// TODO: impl Error
-#[derive(Debug)]
-pub enum Error {
-    Ucs2(ucs2::Error),
-    Mem(&'static str),
-}
-
-impl From<ucs2::Error> for Error {
-    fn from(err: ucs2::Error) -> Self {
-        Self::Ucs2(err)
-    }
-}
 
 pub struct ASReader;
 
@@ -37,6 +25,29 @@ impl ASReader {
         } else {
             Err(Error::Mem("Wrong offset: can't read buf"))
         }
+    }
+}
+
+#[derive(Debug)]
+pub enum Error {
+    Ucs2(ucs2::Error),
+    Mem(&'static str),
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::Ucs2(err) => write!(f, "{:?}", err),
+            Error::Mem(err) => write!(f, "{}", err),
+        }
+    }
+}
+
+impl std::error::Error for Error {}
+
+impl From<ucs2::Error> for Error {
+    fn from(err: ucs2::Error) -> Self {
+        Self::Ucs2(err)
     }
 }
 
