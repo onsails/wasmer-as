@@ -13,7 +13,7 @@ fn main() -> Result<(), Error> {
 
     let add: Func<(i32, i32), i32> = instance.func("add")?;
     
-    // if add throws an exception abort is called
+    // if add throws an exception abort is being called
     let value = add.call(42, 2)?;
 
     assert_eq!(value, 44);
