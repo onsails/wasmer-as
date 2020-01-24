@@ -1,9 +1,9 @@
 [package]
 name = "wasmer-as"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Andrey Kuznetsov <fear@loathing.in>"]
 edition = "2018"
-license-file = "LICENSE"
+license = "Apache-2.0"
 description = "Helpers to read and write memory in AssemblyScript wasm modules executing in wasmer-runtime"
 keywords = ["assemblyscript", "assembly-script", "wasm", "wasmer"]
 homepage = "https://github.com/onsails/wasmer-as"
