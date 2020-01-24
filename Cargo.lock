@@ -530,7 +530,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "wasmer-as"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ucs2 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasmer-runtime 0.13.1 (registry+https://github.com/rust-lang/crates.io-index)",

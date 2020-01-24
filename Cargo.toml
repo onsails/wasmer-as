@@ -1,6 +1,6 @@
 [package]
 name = "wasmer-as"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Andrey Kuznetsov <fear@loathing.in>"]
 edition = "2018"
 license-file = "LICENSE"
