@@ -1,4 +1,4 @@
-use wasmer_runtime::Memory;
+use wasmer_runtime::{Array, Memory, WasmPtr};
 
 // TODO: impl Error
 #[derive(Debug)]
@@ -17,33 +17,25 @@ pub struct ASReader;
 
 impl ASReader {
     pub fn size(offset: usize, memory: &Memory) -> Result<u32, Error> {
-        if offset < 2 {
-            return Err(Error::Mem("Offset is out of the lower bound"));
-        }
-
-        unsafe {
-            let ptr = memory.view::<u16>().as_ptr().add(offset - 2);
-            let ptr = ptr as *const u32;
-            Ok(*ptr)
+        if let Some(cell) = memory.view::<u32>().get(offset / 2 - 1) {
+            Ok(cell.get())
+        } else {
+            Err(Error::Mem("Wrong offset: can't read size"))
         }
     }
 
     pub fn read_string(ptr: i32, memory: &Memory) -> Result<String, Error> {
-        unsafe {
-            let offset = (ptr >> 1) as usize;
-            let size = Self::size(offset, memory)? as usize;
-            if offset + size >= memory.size().bytes().0 {
-                return Err(Error::Mem("Offset is out of the upper bound"));
-            }
-            let ptr = memory.view::<u16>().as_ptr().add(offset as usize) as *const u16;
-            let len = size / std::mem::size_of::<u16>();
-            let input: &[u16] = std::slice::from_raw_parts(ptr, len);
-            let output = std::alloc::alloc(
-                std::alloc::Layout::from_size_align(size, std::mem::align_of::<u8>()).unwrap(),
-            );
-            let output: &mut [u8] = std::slice::from_raw_parts_mut(output, len * 3);
-            let len = ucs2::decode(input, output)?;
-            Ok(String::from_utf8_unchecked(output[..len].into()))
+        let ptr = (ptr >> 1) as u32;
+        let size = Self::size(ptr as usize, memory)?;
+        let ptr: WasmPtr<u16, Array> = WasmPtr::new(ptr * 2);
+        if let Some(buf) = ptr.deref(memory, 0, size / 2) {
+            let input: Vec<u16> = buf.iter().map(|b| b.get()).collect();
+            let mut output: Vec<u8> = vec![0; size as usize * 3];
+            let len = ucs2::decode(&input, &mut output)?;
+            // should not loss because ucs2::decode should guarantee correct utf-8
+            Ok(String::from_utf8_lossy(output[..len].into()).into_owned())
+        } else {
+            Err(Error::Mem("Wrong offset: can't read buf"))
         }
     }
 }
