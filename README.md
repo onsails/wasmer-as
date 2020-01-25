@@ -10,7 +10,7 @@ use wasmer_runtime::{imports, instantiate, Array, Ctx, Func, WasmPtr};
 use wasmer_as::AsmScriptString;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut wasm: Vec<u8> = include_bytes!("get-string.wasm");
+    let wasm = include_bytes!("get-string.wasm");
 
     let import_object = imports! {
         "env" => {

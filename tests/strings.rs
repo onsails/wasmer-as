@@ -3,16 +3,12 @@ extern crate wasmer_runtime;
 extern crate wasmer_as;
 
 use std::error::Error;
-use std::fs::File;
-use std::io::prelude::*;
 use wasmer_as::AsmScriptString;
 use wasmer_runtime::{imports, instantiate, Array, Ctx, Func, WasmPtr};
 
 #[test]
 fn read_strings() -> Result<(), Box<dyn Error>> {
-    let mut file = File::open("get-string.wasm")?;
-    let mut wasm: Vec<u8> = vec![];
-    file.read_to_end(&mut wasm)?;
+    let wasm = include_bytes!("../get-string.wasm");
 
     let import_object = imports! {
         "env" => {
