@@ -6,8 +6,8 @@ Helpers for dealing with assemblyscript memory inside wasmer-runtime
 extern crate wasmer_runtime;
 
 use std::error::Error;
-use wasmer_runtime::{imports, instantiate, Array, Ctx, Func, WasmPtr};
-use wasmer_as::AsmScriptString;
+use wasmer_runtime::{imports, instantiate, Ctx, Func};
+use wasmer_as::{AsmScriptString, AsmScriptStringPtr};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let wasm = include_bytes!("get-string.wasm");
@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // export function getString(): string {
     //   return "TheString";
     // }
-    let get_string: Func<(), WasmPtr<u16, Array>> = instance.func("getString")?;
+    let get_string: Func<(), AsmScriptStringPtr> = instance.func("getString")?;
     
     let str_ptr = get_string.call()?;
     
@@ -37,7 +37,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 // if get_string throws an exception abort for some reason is being called
-fn abort(ctx: &mut Ctx, message: WasmPtr<u16, Array>, filename: WasmPtr<u16, Array>, line: i32, col: i32) {
+fn abort(ctx: &mut Ctx, message: AsmScriptStringPtr, filename: AsmScriptStringPtr, line: i32, col: i32) {
     let memory = ctx.memory(0);
     let message = message.get_as_string(memory).unwrap();
     let filename = filename.get_as_string(memory).unwrap();

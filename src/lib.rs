@@ -1,6 +1,8 @@
 use std::fmt;
 use wasmer_runtime::{Array, Memory, WasmPtr};
 
+pub type AsmScriptStringPtr = WasmPtr<u16, Array>;
+
 pub trait AsmScriptString {
     fn get_as_string(self, memory: &Memory) -> Result<String, Error>;
 
@@ -17,7 +19,7 @@ pub trait AsmScriptString {
     }
 }
 
-impl AsmScriptString for WasmPtr<u16, Array> {
+impl AsmScriptString for AsmScriptStringPtr {
     fn get_as_string(self, memory: &Memory) -> Result<String, Error> {
         let offset = self.offset();
         let size = Self::size(offset, memory)?;
