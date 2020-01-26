@@ -4,13 +4,14 @@ Helpers for dealing with assemblyscript memory inside wasmer-runtime
 ```rust
 #[macro_use]
 extern crate wasmer_runtime;
+extern crate wasmer_as;
 
 use std::error::Error;
-use wasmer_runtime::{imports, instantiate, Ctx, Func};
 use wasmer_as::{AsmScriptString, AsmScriptStringPtr};
+use wasmer_runtime::{imports, instantiate, Ctx, Func};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let wasm = include_bytes!("get-string.wasm");
+    let wasm = include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/get-string.wasm"));
 
     let import_object = imports! {
         "env" => {

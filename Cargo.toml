@@ -9,9 +9,16 @@ keywords = ["assemblyscript", "assembly-script", "wasm", "wasmer"]
 homepage = "https://github.com/onsails/wasmer-as"
 documentation = "https://github.com/onsails/wasmer-as"
 repository = "https://github.com/onsails/wasmer-as"
+build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 wasmer-runtime = "^0.13.1"
 ucs2 = "^0.3.1"
+
+[build-dependencies]
+skeptic = "0.13"
+
+[dev-dependencies]
+skeptic = "0.13"
