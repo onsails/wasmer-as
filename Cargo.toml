@@ -1,6 +1,6 @@
 [package]
 name = "wasmer-as"
-version = "0.2.2"
+version = "0.2.3-alpha.0"
 authors = ["Andrey Kuznetsov <fear@loathing.in>"]
 edition = "2018"
 license = "Apache-2.0"
