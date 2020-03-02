@@ -3,7 +3,7 @@ extern crate wasmer_runtime;
 extern crate wasmer_as;
 
 use std::error::Error;
-use wasmer_as::{AsmScriptString, AsmScriptStringPtr};
+use wasmer_as::{AsmScriptRead, AsmScriptStringPtr};
 use wasmer_runtime::{imports, instantiate, Ctx, Func};
 
 #[test]
@@ -19,7 +19,7 @@ fn read_strings() -> Result<(), Box<dyn Error>> {
     let get_string: Func<(), AsmScriptStringPtr> = instance.func("getString")?;
 
     let str_ptr = get_string.call()?;
-    let string = str_ptr.get_as_string(instance.context().memory(0))?;
+    let string = str_ptr.read(instance.context().memory(0))?;
 
     assert_eq!(string, "TheString");
 

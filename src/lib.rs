@@ -3,24 +3,14 @@ use wasmer_runtime::{Array, Memory, WasmPtr};
 
 pub type AsmScriptStringPtr = WasmPtr<u16, Array>;
 
-pub trait AsmScriptString {
-    fn get_as_string(self, memory: &Memory) -> Result<String, Error>;
+pub trait AsmScriptRead<T> {
+    fn read(self, memory: &Memory) -> Result<T, Error>;
 
-    fn size(offset: u32, memory: &Memory) -> Result<u32, Error> {
-        if offset < 4 {
-            return Err(Error::Mem("Wrong offset: les than 2"));
-        }
-
-        if let Some(cell) = memory.view::<u32>().get(offset as usize / 4 - 1) {
-            Ok(cell.get())
-        } else {
-            Err(Error::Mem("Wrong offset: can't read size"))
-        }
-    }
+    fn size(offset: u32, memory: &Memory) -> Result<u32, Error>;
 }
 
-impl AsmScriptString for AsmScriptStringPtr {
-    fn get_as_string(self, memory: &Memory) -> Result<String, Error> {
+impl AsmScriptRead<String> for AsmScriptStringPtr {
+    fn read(self, memory: &Memory) -> Result<String, Error> {
         let offset = self.offset();
         let size = Self::size(offset, memory)?;
         if let Some(buf) = self.deref(memory, 0, size / 2) {
@@ -31,6 +21,18 @@ impl AsmScriptString for AsmScriptStringPtr {
             Ok(String::from_utf8_lossy(output[..len].into()).into_owned())
         } else {
             Err(Error::Mem("Wrong offset: can't read buf"))
+        }
+    }
+
+    fn size(offset: u32, memory: &Memory) -> Result<u32, Error> {
+        if offset < 4 {
+            return Err(Error::Mem("Wrong offset: les than 2"));
+        }
+
+        if let Some(cell) = memory.view::<u32>().get(offset as usize / 4 - 1) {
+            Ok(cell.get())
+        } else {
+            Err(Error::Mem("Wrong offset: can't read size"))
         }
     }
 }

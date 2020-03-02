@@ -7,7 +7,7 @@ extern crate wasmer_runtime;
 extern crate wasmer_as;
 
 use std::error::Error;
-use wasmer_as::{AsmScriptString, AsmScriptStringPtr};
+use wasmer_as::{AsmScriptRead, AsmScriptStringPtr};
 use wasmer_runtime::{imports, instantiate, Ctx, Func};
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     
     let str_ptr = get_string.call()?;
     
-    let string = str_ptr.get_as_string(instance.context().memory(0))?;
+    let string = str_ptr.read(instance.context().memory(0))?;
 
     assert_eq!(string, "TheString");
 
@@ -40,8 +40,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 // if get_string throws an exception abort for some reason is being called
 fn abort(ctx: &mut Ctx, message: AsmScriptStringPtr, filename: AsmScriptStringPtr, line: i32, col: i32) {
     let memory = ctx.memory(0);
-    let message = message.get_as_string(memory).unwrap();
-    let filename = filename.get_as_string(memory).unwrap();
+    let message = message.read(memory).unwrap();
+    let filename = filename.read(memory).unwrap();
     eprintln!("Error: {} at {}:{} col: {}", message, filename, line, col);
 }
 ```
