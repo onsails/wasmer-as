@@ -26,7 +26,7 @@ impl AsmScriptRead<String> for AsmScriptStringPtr {
 
     fn size(offset: u32, memory: &Memory) -> Result<u32, Error> {
         if offset < 4 {
-            return Err(Error::Mem("Wrong offset: les than 2"));
+            return Err(Error::Mem("Wrong offset: less than 2"));
         }
 
         if let Some(cell) = memory.view::<u32>().get(offset as usize / 4 - 1) {
