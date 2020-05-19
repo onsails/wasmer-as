@@ -1,5 +1,6 @@
 use std::fmt;
-use wasmer_runtime::{Array, Memory, WasmPtr};
+use wasmer_runtime_core::memory::ptr::{Array, WasmPtr};
+use wasmer_runtime_core::memory::Memory;
 
 pub type AsmScriptStringPtr = WasmPtr<u16, Array>;
 
