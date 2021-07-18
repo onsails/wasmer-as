@@ -1,25 +1,50 @@
-#[macro_use]
-extern crate wasmer_runtime;
-extern crate wasmer_as;
-
 use std::error::Error;
+use wasmer::*;
 use wasmer_as::{AsmScriptRead, AsmScriptStringPtr};
-use wasmer_runtime::{imports, instantiate, Ctx, Func};
+
+#[derive(Clone)]
+struct Env {
+    memory: LazyInit<Memory>,
+}
+
+impl WasmerEnv for Env {
+    fn init_with_instance(&mut self, instance: &Instance) -> Result<(), HostEnvInitError> {
+        self.memory.initialize(
+            instance
+                .exports
+                .get_memory("memory")
+                .map_err(HostEnvInitError::from)?
+                .clone(),
+        );
+        Ok(())
+    }
+}
 
 #[test]
 fn read_strings() -> Result<(), Box<dyn Error>> {
-    let wasm = include_bytes!("../get-string.wasm");
+    let wasm_bytes = include_bytes!("../get-string.wasm");
+    let store = Store::default();
+    let module = Module::new(&store, wasm_bytes)?;
+
+    let env = Env {
+        memory: LazyInit::default(),
+    };
 
     let import_object = imports! {
         "env" => {
-            "abort" => func!(abort),
+            "abort" => Function::new_native_with_env(&store, env, abort),
         },
     };
-    let instance = instantiate(&wasm[..], &import_object).expect("Unable to instantiate");
-    let get_string: Func<(), AsmScriptStringPtr> = instance.func("getString")?;
+
+    let instance = Instance::new(&module, &import_object)?;
+    let memory = instance.exports.get_memory("memory").expect("get memory");
+
+    let get_string = instance
+        .exports
+        .get_native_function::<(), AsmScriptStringPtr>("getString")?;
 
     let str_ptr = get_string.call()?;
-    let string = str_ptr.read(instance.context().memory(0))?;
+    let string = str_ptr.read(memory)?;
 
     assert_eq!(string, "TheString");
 
@@ -28,11 +53,14 @@ fn read_strings() -> Result<(), Box<dyn Error>> {
 
 #[allow(dead_code)]
 fn abort(
-    _ctx: &mut Ctx,
-    _message: AsmScriptStringPtr,
-    _filename: AsmScriptStringPtr,
-    _line: i32,
-    _col: i32,
+    env: &Env,
+    message: AsmScriptStringPtr,
+    filename: AsmScriptStringPtr,
+    line: i32,
+    col: i32,
 ) {
-    eprintln!("abort called");
+    let memory = env.memory.get_ref().expect("initialized memory");
+    let message = message.read(memory).unwrap();
+    let filename = filename.read(memory).unwrap();
+    eprintln!("Error: {} at {}:{} col: {}", message, filename, line, col);
 }

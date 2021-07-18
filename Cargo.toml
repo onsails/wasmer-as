@@ -14,12 +14,12 @@ build = "build.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-wasmer-runtime-core = "^0.17"
-ucs2 = "^0.3.1"
+wasmer = "^2.0"
+ucs2 = "^0.3"
 
 [build-dependencies]
 skeptic = "0.13"
 
 [dev-dependencies]
 skeptic = "0.13"
-wasmer-runtime = "^0.17"
+wasmer = "^2.0"
