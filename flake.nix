@@ -21,6 +21,8 @@
               rust-bin.stable.latest.default
               libiconv
               nodejs-14_x
+
+              cargo-release
             ];
 
             shellHook = ''
