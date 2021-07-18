@@ -16,6 +16,28 @@
       in
         {
 
+          checks.ci = pkgs.stdenv.mkDerivation {
+            name = "ci";
+
+            src = ./.;
+
+            buildInputs = with pkgs;
+              [
+                rust-bin.stable.latest.default
+                nodejs-14_x
+              ];
+
+            buildPhase = ''
+              cd test-wasm
+              export HOME=$TMP
+              npm install
+              npm run asbuild
+
+              cd ..
+              cargo test
+            '';
+          };
+
           devShell = pkgs.mkShell {
             buildInputs = with pkgs; [
               rust-bin.stable.latest.default
@@ -24,13 +46,7 @@
 
               cargo-release
             ];
-
-            shellHook = ''
-              cd test-wasm
-              npm run asbuild
-            '';
           };
-
         }
   );
 }
