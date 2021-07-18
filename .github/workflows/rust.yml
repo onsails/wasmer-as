@@ -21,4 +21,4 @@ jobs:
           experimental-features = nix-command flakes
           access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
     - name: Run tests
-      run: nix flake check
+      run: nix flake check --print-build-logs
