@@ -49,7 +49,7 @@ fn read_strings() -> Result<(), Box<dyn Error>> {
     let str_ptr = get_string.call()?;
     let string = str_ptr.read(memory)?;
 
-    assert_eq!(string, "TheString ©");
+    assert_eq!(string, "$¢ह한𝌆");
 
     Ok(())
 }

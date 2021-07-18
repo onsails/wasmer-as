@@ -59,7 +59,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let memory = instance.exports.get_memory("memory").expect("get memory");
     let string = str_ptr.read(memory)?;
 
-    assert_eq!(string, "TheString ©");
+    assert_eq!(string, "$¢ह한𝌆");
 
     Ok(())
 }

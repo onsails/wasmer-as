@@ -1,3 +1,3 @@
 export function getString(): string {
-  return "TheString ©";
+  return "$¢ह한𝌆";
 }
