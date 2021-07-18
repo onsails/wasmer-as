@@ -36,6 +36,8 @@
               cd ..
               cargo test
             '';
+
+            dontInstall = true;
           };
 
           devShell = pkgs.mkShell {
