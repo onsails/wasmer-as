@@ -20,7 +20,13 @@
             buildInputs = with pkgs; [
               rust-bin.stable.latest.default
               libiconv
+              nodejs-14_x
             ];
+
+            shellHook = ''
+              cd test-wasm
+              npm run asbuild
+            '';
           };
 
         }

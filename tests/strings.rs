@@ -22,7 +22,10 @@ impl WasmerEnv for Env {
 
 #[test]
 fn read_strings() -> Result<(), Box<dyn Error>> {
-    let wasm_bytes = include_bytes!("../get-string.wasm");
+    let wasm_bytes = include_bytes!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/test-wasm/build/optimized.wasm"
+    ));
     let store = Store::default();
     let module = Module::new(&store, wasm_bytes)?;
 
@@ -46,7 +49,7 @@ fn read_strings() -> Result<(), Box<dyn Error>> {
     let str_ptr = get_string.call()?;
     let string = str_ptr.read(memory)?;
 
-    assert_eq!(string, "TheString");
+    assert_eq!(string, "TheString ©");
 
     Ok(())
 }
