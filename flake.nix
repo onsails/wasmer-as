@@ -25,6 +25,8 @@
               [
                 rust-bin.stable.latest.default
                 nodejs-14_x
+
+                cacert
               ];
 
             buildPhase = ''
@@ -35,9 +37,12 @@
 
               cd ..
               cargo test
+
+              mkdir $out
             '';
 
             dontInstall = true;
+            dontFixup = true;
           };
 
           devShell = pkgs.mkShell {
