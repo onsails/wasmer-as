@@ -1,6 +1,6 @@
 use wasmer::{HostEnvInitError, Instance, LazyInit, Memory, WasmerEnv};
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Env {
     pub memory: LazyInit<Memory>,
 }
