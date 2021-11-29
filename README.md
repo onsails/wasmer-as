@@ -3,26 +3,8 @@ Helpers for dealing with assemblyscript memory inside wasmer-runtime
 
 ```rust
 use std::error::Error;
-use wasmer::*;
-use wasmer_as::{AsmScriptRead, AsmScriptStringPtr};
-
-#[derive(Clone)]
-struct Env {
-    memory: LazyInit<Memory>,
-}
-
-impl WasmerEnv for Env {
-    fn init_with_instance(&mut self, instance: &Instance) -> Result<(), HostEnvInitError> {
-        self.memory.initialize(
-            instance
-                .exports
-                .get_memory("memory")
-                .map_err(HostEnvInitError::from)?
-                .clone(),
-        );
-        Ok(())
-    }
-}
+use wasmer::{Instance, Memory, MemoryType, Module, Store};
+use wasmer_as::{AsmScriptRead, AsmScriptStringPtr, Env, abort};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let wasm_bytes = include_bytes!(concat!(
@@ -31,17 +13,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     ));
     let store = Store::default();
     let module = Module::new(&store, wasm_bytes)?;
-
-    let env = Env {
-        memory: LazyInit::default(),
-    };
-
+    let memory = Memory::new(&store, MemoryType::new(1, None, false)).unwrap();
     let import_object = imports! {
         "env" => {
-            "abort" => Function::new_native_with_env(&store, env, abort),
+            "abort" => Function::new_native_with_env(&store, memory, abort),
         },
     };
-
     let instance = Instance::new(&module, &import_object)?;
 
     // for the test we use simple function returning constant string:
@@ -62,19 +39,5 @@ fn main() -> Result<(), Box<dyn Error>> {
     assert_eq!(string, "$¢ह한𝌆");
 
     Ok(())
-}
-
-// if get_string throws an exception abort for some reason is being called
-fn abort(
-    env: &Env,
-    message: AsmScriptStringPtr,
-    filename: AsmScriptStringPtr,
-    line: i32,
-    col: i32
-) {
-    let memory = env.memory.get_ref().expect("initialized memory");
-    let message = message.read(memory).unwrap();
-    let filename = filename.read(memory).unwrap();
-    eprintln!("Error: {} at {}:{} col: {}", message, filename, line, col);
 }
 ```

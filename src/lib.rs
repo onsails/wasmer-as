@@ -1,3 +1,8 @@
+mod env;
+pub use env::Env;
+mod tools;
+pub use tools::abort;
+
 use std::fmt;
 use wasmer::{Array, Memory, WasmPtr};
 
