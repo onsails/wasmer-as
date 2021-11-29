@@ -1,6 +1,6 @@
 use std::error::Error;
 use wasmer::*;
-use wasmer_as::{AsmScriptRead, AsmScriptStringPtr};
+use wasmer_as::{Read, StringPtr};
 
 #[derive(Clone)]
 struct Env {
@@ -44,7 +44,7 @@ fn read_strings() -> Result<(), Box<dyn Error>> {
 
     let get_string = instance
         .exports
-        .get_native_function::<(), AsmScriptStringPtr>("getString")?;
+        .get_native_function::<(), StringPtr>("getString")?;
 
     let str_ptr = get_string.call()?;
     let string = str_ptr.read(memory)?;
@@ -57,8 +57,8 @@ fn read_strings() -> Result<(), Box<dyn Error>> {
 #[allow(dead_code)]
 fn abort(
     env: &Env,
-    message: AsmScriptStringPtr,
-    filename: AsmScriptStringPtr,
+    message: StringPtr,
+    filename: StringPtr,
     line: i32,
     col: i32,
 ) {

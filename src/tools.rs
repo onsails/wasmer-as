@@ -1,10 +1,10 @@
-use super::{Env, AsmScriptStringPtr, AsmScriptRead};
+use super::{Env, StringPtr, Read};
 
 // if get_string throws an exception abort for some reason is being called
 pub fn abort(
     env: &Env,
-    message: AsmScriptStringPtr,
-    filename: AsmScriptStringPtr,
+    message: StringPtr,
+    filename: StringPtr,
     line: i32,
     col: i32
 ) {
