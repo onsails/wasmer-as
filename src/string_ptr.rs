@@ -1,11 +1,11 @@
 use std::convert::TryFrom;
 use wasmer::{WasmPtr, Array, Value};
-use super::{Read, Memory, Error, Env, Write};
+use super::{Read, Memory, Env, Write};
 
 pub type StringPtr = WasmPtr<u16, Array>;
 
 impl Read<String> for StringPtr {
-    fn read(self, memory: &Memory) -> Result<String, Error> {
+    fn read(self, memory: &Memory) -> anyhow::Result<String> {
         let size = self.size(memory)?;
         // we need size / 2 because assemblyscript counts bytes
         // while deref considers u16 elements
@@ -13,21 +13,12 @@ impl Read<String> for StringPtr {
             let input: Vec<u16> = buf.iter().map(|b| b.get()).collect();
             Ok(String::from_utf16_lossy(&input))
         } else {
-            Err(Error::Mem("Wrong offset: can't read buf"))
+            anyhow::bail!("Wrong offset: can't read buf")
         }
     }
 
-    fn size(self, memory: &Memory) -> Result<u32, Error> {
-        if self.offset() < 4 {
-            return Err(Error::Mem("Wrong offset: less than 2"));
-        }
-        // read -4 offset
-        // https://www.assemblyscript.org/memory.html#internals
-        if let Some(cell) = memory.view::<u32>().get(self.offset() as usize / (32 / 8) - 1) {
-            Ok(cell.get())
-        } else {
-            Err(Error::Mem("Wrong offset: can't read size"))
-        }
+    fn size(self, memory: &Memory) -> anyhow::Result<u32> {
+        size(self.offset(), memory)
     }
 }
 
@@ -40,8 +31,8 @@ impl Write<String> for StringPtr {
         let utf16 = value.encode_utf16();
         let view = env.memory.get_ref().expect("Failed to load memory").view::<u16>();
 
-        let from = usize::try_from(ptr)?;
-        for (bytes, cell) in utf16.into_iter().zip(view[from / 2..(from / 2 + ((size) as usize))].iter()) {
+        let from = usize::try_from(ptr)? / 2;
+        for (bytes, cell) in utf16.into_iter().zip(view[from..from + (size as usize)].iter()) {
             cell.set(bytes);
         }
         Ok(Box::new(StringPtr::new(ptr as u32)))
@@ -53,5 +44,18 @@ impl Write<String> for StringPtr {
 
     fn free() -> anyhow::Result<()> {
         todo!()
+    }
+}
+
+fn size(offset: u32, memory: &Memory) -> anyhow::Result<u32> {
+    if offset < 4 {
+        anyhow::bail!("Wrong offset: less than 2")
+    }
+    // read -4 offset
+    // https://www.assemblyscript.org/memory.html#internals
+    if let Some(cell) = memory.view::<u32>().get(offset as usize / (32 / 8) - 1) {
+        Ok(cell.get())
+    } else {
+        anyhow::bail!("Wrong offset: can't read size")
     }
 }

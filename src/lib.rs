@@ -10,8 +10,8 @@ use std::fmt;
 use wasmer::{Memory};
 
 pub trait Read<T> {
-    fn read(self, memory: &Memory) -> Result<T, Error>;
-    fn size(self, memory: &Memory) -> Result<u32, Error>;
+    fn read(self, memory: &Memory) -> anyhow::Result<T>;
+    fn size(self, memory: &Memory) -> anyhow::Result<u32>;
 }
 
 pub trait Write<T> {
