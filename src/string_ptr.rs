@@ -46,4 +46,12 @@ impl Write<String> for StringPtr {
         }
         Ok(Box::new(StringPtr::new(ptr as u32)))
     }
+
+    fn write(value: &str, memory: &Env) -> anyhow::Result<Box<Self>> {
+        todo!()
+    }
+
+    fn free() -> anyhow::Result<()> {
+        todo!()
+    }
 }
