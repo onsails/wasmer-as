@@ -12,7 +12,10 @@ use wasmer::{Memory};
 pub trait Read<T> {
     fn read(self, memory: &Memory) -> Result<T, Error>;
     fn size(self, memory: &Memory) -> Result<u32, Error>;
-    fn malloc(value: &str, memory: &Memory) -> Result<Box<Self>, Error>;
+}
+
+pub trait Write<T> {
+    fn alloc(value: &str, memory: &Env) -> anyhow::Result<Box<Self>>;
 }
 
 #[derive(Debug)]

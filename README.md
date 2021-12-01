@@ -3,8 +3,8 @@ Helpers for dealing with assemblyscript memory inside wasmer-runtime
 
 ```rust
 use std::error::Error;
-use wasmer::{Instance, Memory, MemoryType, Module, Store};
-use wasmer_as::{AsmScriptRead, AsmScriptStringPtr, Env, abort};
+use wasmer::{Store, Module, Instance, imports, Function};
+use wasmer_as::{Read, Write, StringPtr, Env, abort};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let wasm_bytes = include_bytes!(concat!(
@@ -31,12 +31,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     let results = get_string.call(&[])?;
 
     let str_ptr = results.first().expect("get pointer");
-    let str_ptr = AsmScriptStringPtr::new(str_ptr.unwrap_i32() as u32);
+    let str_ptr = StringPtr::new(str_ptr.unwrap_i32() as u32);
 
     let memory = instance.exports.get_memory("memory").expect("get memory");
     let string = str_ptr.read(memory)?;
 
     assert_eq!(string, "$¢ह한𝌆");
+
+    let str_ptr_2 = StringPtr::alloc("hello return", &env)?;
+    let string = str_ptr_2.read(memory)?;
+    assert_eq!(string, "hello return");
 
     Ok(())
 }

@@ -15,10 +15,4 @@ build = "build.rs"
 
 [dependencies]
 wasmer = "2.0"
-
-[build-dependencies]
-skeptic = "0.13"
-
-[dev-dependencies]
-skeptic = "0.13"
-wasmer = "2.0"
+anyhow = "1"

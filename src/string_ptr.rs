@@ -1,5 +1,6 @@
-use wasmer::{WasmPtr, Array};
-use super::{Read, Memory, Error};
+use std::convert::TryFrom;
+use wasmer::{WasmPtr, Array, Value};
+use super::{Read, Memory, Error, Env, Write};
 
 pub type StringPtr = WasmPtr<u16, Array>;
 
@@ -28,8 +29,21 @@ impl Read<String> for StringPtr {
             Err(Error::Mem("Wrong offset: can't read size"))
         }
     }
+}
 
-    fn malloc(_value: &str, _memory: &Memory) -> Result<Box<StringPtr>, Error> {
-        todo!();
+impl Write<String> for StringPtr {
+    fn alloc(value: &str, env: &Env) -> anyhow::Result<Box<StringPtr>> {
+        let new = env.new.as_ref().expect("Assembly Script Runtime ot exported");
+        let size = i32::try_from(value.len()).expect("Cannot convert value size t i32");
+
+        let ptr = new.call(&[Value::I32(size << 1), Value::I32(1)]).expect("Failed to call __new").get(0).unwrap().i32().unwrap();
+        let utf16 = value.encode_utf16();
+        let view = env.memory.get_ref().expect("Failed to load memory").view::<u16>();
+
+        let from = usize::try_from(ptr)?;
+        for (bytes, cell) in utf16.into_iter().zip(view[from / 2..(from / 2 + ((size) as usize))].iter()) {
+            cell.set(bytes);
+        }
+        Ok(Box::new(StringPtr::new(ptr as u32)))
     }
 }
