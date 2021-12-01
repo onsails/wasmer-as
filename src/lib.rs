@@ -1,13 +1,13 @@
 mod env;
-mod tools;
 mod string_ptr;
+mod tools;
 
-pub use string_ptr::StringPtr;
 pub use env::Env;
+pub use string_ptr::StringPtr;
 pub use tools::abort;
 
 use std::fmt;
-use wasmer::{Memory};
+use wasmer::Memory;
 
 pub trait Read<T> {
     fn read(self, memory: &Memory) -> anyhow::Result<T>;
@@ -16,8 +16,8 @@ pub trait Read<T> {
 
 pub trait Write<T> {
     fn alloc(value: &str, memory: &Env) -> anyhow::Result<Box<Self>>;
-    fn write(value: &str, memory: &Env) -> anyhow::Result<Box<Self>>;
-    fn free() -> anyhow::Result<()>;
+    fn write(&self, value: &str, env: &Env) -> anyhow::Result<()>;
+    fn free(memory: &Env) -> anyhow::Result<()>;
 }
 
 #[derive(Debug)]

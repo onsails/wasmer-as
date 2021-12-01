@@ -1,6 +1,6 @@
+use super::{Env, Memory, Read, Write};
 use std::convert::TryFrom;
-use wasmer::{WasmPtr, Array, Value};
-use super::{Read, Memory, Env, Write};
+use wasmer::{Array, Value, WasmPtr};
 
 pub type StringPtr = WasmPtr<u16, Array>;
 
@@ -24,27 +24,56 @@ impl Read<String> for StringPtr {
 
 impl Write<String> for StringPtr {
     fn alloc(value: &str, env: &Env) -> anyhow::Result<Box<StringPtr>> {
-        let new = env.new.as_ref().expect("Assembly Script Runtime ot exported");
-        let size = i32::try_from(value.len()).expect("Cannot convert value size t i32");
+        let new = env
+            .new
+            .as_ref()
+            .expect("Assembly Script Runtime ot exported");
+        let size = i32::try_from(value.len())?;
 
-        let ptr = new.call(&[Value::I32(size << 1), Value::I32(1)]).expect("Failed to call __new").get(0).unwrap().i32().unwrap();
-        let utf16 = value.encode_utf16();
-        let view = env.memory.get_ref().expect("Failed to load memory").view::<u16>();
+        let offset = u32::try_from(
+            new.call(&[Value::I32(size << 1), Value::I32(1)])
+                .expect("Failed to call __new")
+                .get(0)
+                .unwrap()
+                .i32()
+                .unwrap(),
+        )?;
+        write_str(offset, value, env)?;
+        Ok(Box::new(StringPtr::new(offset)))
+    }
 
-        let from = usize::try_from(ptr)? / 2;
-        for (bytes, cell) in utf16.into_iter().zip(view[from..from + (size as usize)].iter()) {
-            cell.set(bytes);
+    fn write(&self, value: &str, env: &Env) -> anyhow::Result<()> {
+        let prev_size = size(
+            self.offset(),
+            env.memory.get_ref().expect("Failed to load memory"),
+        )?;
+        let new_size = u32::try_from(value.len())? << 1;
+        if prev_size == new_size {
+            write_str(self.offset(), value, env)?
+        } else {
+            todo!("Remove this and reallocate of bigger or smaller space")
         }
-        Ok(Box::new(StringPtr::new(ptr as u32)))
+        Ok(())
     }
 
-    fn write(value: &str, memory: &Env) -> anyhow::Result<Box<Self>> {
-        todo!()
+    fn free(_env: &Env) -> anyhow::Result<()> {
+        todo!("Release the memory from this string")
     }
+}
 
-    fn free() -> anyhow::Result<()> {
-        todo!()
+fn write_str(offset: u32, value: &str, env: &Env) -> anyhow::Result<()> {
+    let utf16 = value.encode_utf16();
+    let view = env
+        .memory
+        .get_ref()
+        .expect("Failed to load memory")
+        .view::<u16>();
+    // We count in 32 so we have to devide by 2
+    let from = usize::try_from(offset)? / 2;
+    for (bytes, cell) in utf16.into_iter().zip(view[from..from + value.len()].iter()) {
+        cell.set(bytes);
     }
+    Ok(())
 }
 
 fn size(offset: u32, memory: &Memory) -> anyhow::Result<u32> {

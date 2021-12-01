@@ -1,9 +1,9 @@
-use wasmer::{HostEnvInitError, Instance, Memory, LazyInit, WasmerEnv, Function};
+use wasmer::{Function, HostEnvInitError, Instance, LazyInit, Memory, WasmerEnv};
 
 #[derive(Clone, Default)]
 pub struct Env {
     pub memory: LazyInit<Memory>,
-    pub new: Option<Function>
+    pub new: Option<Function>,
 }
 
 impl Env {
@@ -25,9 +25,7 @@ impl WasmerEnv for Env {
         if let Ok(func) = instance.exports.get_function("__new") {
             self.new = Some(func.clone())
         }
-        self.memory.initialize(
-            mem,
-        );
+        self.memory.initialize(mem);
         Ok(())
     }
 }
