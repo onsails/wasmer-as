@@ -52,6 +52,18 @@ fn read_alloc_strings() -> Result<(), Box<dyn Error>> {
             Ok(func) => Some(func.clone()),
             _ => None,
         },
+        match instance.exports.get_function("__pin") {
+            Ok(func) => Some(func.clone()),
+            _ => None,
+        },
+        match instance.exports.get_function("__unpin") {
+            Ok(func) => Some(func.clone()),
+            _ => None,
+        },
+        match instance.exports.get_function("__collect") {
+            Ok(func) => Some(func.clone()),
+            _ => None,
+        },
     );
 
     let get_string = instance
@@ -91,6 +103,18 @@ fn read_write_strings() -> Result<(), Box<dyn Error>> {
     let env = Env::new(
         memory.clone(),
         match instance.exports.get_function("__new") {
+            Ok(func) => Some(func.clone()),
+            _ => None,
+        },
+        match instance.exports.get_function("__pin") {
+            Ok(func) => Some(func.clone()),
+            _ => None,
+        },
+        match instance.exports.get_function("__unpin") {
+            Ok(func) => Some(func.clone()),
+            _ => None,
+        },
+        match instance.exports.get_function("__collect") {
             Ok(func) => Some(func.clone()),
             _ => None,
         },

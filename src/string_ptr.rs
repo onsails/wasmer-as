@@ -25,7 +25,7 @@ impl Read<String> for StringPtr {
 impl Write<String> for StringPtr {
     fn alloc(value: &str, env: &Env) -> anyhow::Result<Box<StringPtr>> {
         let new = env
-            .new
+            .fn_new
             .as_ref()
             .expect("Assembly Script Runtime ot exported");
         let size = i32::try_from(value.len())?;
