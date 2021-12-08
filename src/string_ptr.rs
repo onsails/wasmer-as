@@ -1,5 +1,5 @@
 use super::{Env, Memory, Read, Write};
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use wasmer::{Array, Value, WasmPtr};
 
 pub type StringPtr = WasmPtr<u16, Array>;
@@ -27,7 +27,7 @@ impl Write<String> for StringPtr {
         let new = env
             .fn_new
             .as_ref()
-            .expect("Assembly Script Runtime ot exported");
+            .expect("Assembly Script Runtime not exported");
         let size = i32::try_from(value.len())?;
 
         let offset = u32::try_from(
@@ -39,6 +39,15 @@ impl Write<String> for StringPtr {
                 .unwrap(),
         )?;
         write_str(offset, value, env)?;
+
+        // pin
+        let pin = env
+            .fn_pin
+            .as_ref()
+            .expect("Assembly Script Runtime not exported");
+        pin.call(&[Value::I32(offset.try_into().unwrap())])
+            .expect("Failed to call __pin");
+
         Ok(Box::new(StringPtr::new(offset)))
     }
 
