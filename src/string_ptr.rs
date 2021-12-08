@@ -4,6 +4,14 @@ use wasmer::{Array, Value, WasmPtr};
 
 pub type StringPtr = WasmPtr<u16, Array>;
 
+macro_rules! export_asr {
+    ($func_name:ident, $env:expr) => {
+        $env.$func_name
+            .as_ref()
+            .expect("Assembly Script Runtime not exported")
+    };
+}
+
 impl Read<String> for StringPtr {
     fn read(self, memory: &Memory) -> anyhow::Result<String> {
         let size = self.size(memory)?;
@@ -24,10 +32,7 @@ impl Read<String> for StringPtr {
 
 impl Write<String> for StringPtr {
     fn alloc(value: &str, env: &Env) -> anyhow::Result<Box<StringPtr>> {
-        let new = env
-            .fn_new
-            .as_ref()
-            .expect("Assembly Script Runtime not exported");
+        let new = export_asr!(fn_new, env);
         let size = i32::try_from(value.len())?;
 
         let offset = u32::try_from(
@@ -41,10 +46,7 @@ impl Write<String> for StringPtr {
         write_str(offset, value, env)?;
 
         // pin
-        let pin = env
-            .fn_pin
-            .as_ref()
-            .expect("Assembly Script Runtime not exported");
+        let pin = export_asr!(fn_pin, env);
         pin.call(&[Value::I32(offset.try_into().unwrap())])
             .expect("Failed to call __pin");
 
