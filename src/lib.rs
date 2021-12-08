@@ -16,7 +16,7 @@ pub trait Read<T> {
 
 pub trait Write<T> {
     fn alloc(value: &str, memory: &Env) -> anyhow::Result<Box<Self>>;
-    fn write(&self, value: &str, env: &Env) -> anyhow::Result<()>;
+    fn write(&mut self, value: &str, env: &Env) -> anyhow::Result<Box<Self>>;
     fn free(memory: &Env) -> anyhow::Result<()>;
 }
 

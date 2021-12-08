@@ -124,7 +124,7 @@ fn read_write_strings() -> Result<(), Box<dyn Error>> {
         .exports
         .get_native_function::<(), StringPtr>("getString")?;
 
-    let str_ptr = get_string.call()?;
+    let mut str_ptr = get_string.call()?;
     let string = str_ptr.read(memory)?;
 
     assert_eq!(string, "hello test");

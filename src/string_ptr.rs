@@ -53,18 +53,29 @@ impl Write<String> for StringPtr {
         Ok(Box::new(StringPtr::new(offset)))
     }
 
-    fn write(&self, value: &str, env: &Env) -> anyhow::Result<()> {
+    fn write(&mut self, value: &str, env: &Env) -> anyhow::Result<Box<StringPtr>> {
         let prev_size = size(
             self.offset(),
             env.memory.get_ref().expect("Failed to load memory"),
         )?;
         let new_size = u32::try_from(value.len())? << 1;
         if prev_size == new_size {
-            write_str(self.offset(), value, env)?
+            write_str(self.offset(), value, env)?;
+            Ok(Box::new(*self))
         } else {
-            todo!("Remove this and reallocate of bigger or smaller space")
+            // unpin old ptr
+            let unpin = export_asr!(fn_pin, env);
+            unpin
+                .call(&[Value::I32(self.offset().try_into().unwrap())])
+                .expect("Failed to call __unpin");
+
+            // collect
+            let collect = export_asr!(fn_collect, env);
+            collect.call(&[]).expect("failed to call __collect");
+
+            // alloc with new size
+            StringPtr::alloc(value, env)
         }
-        Ok(())
     }
 
     fn free(_env: &Env) -> anyhow::Result<()> {
