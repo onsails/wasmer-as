@@ -78,8 +78,17 @@ impl Write<String> for StringPtr {
         }
     }
 
-    fn free(_env: &Env) -> anyhow::Result<()> {
-        todo!("Release the memory from this string")
+    fn free(self, env: &Env) -> anyhow::Result<()> {
+        // unpin
+        let unpin = export_asr!(fn_pin, env);
+        unpin
+            .call(&[Value::I32(self.offset().try_into().unwrap())])
+            .expect("Failed to call __unpin");
+
+        // collect
+        let collect = export_asr!(fn_collect, env);
+        collect.call(&[]).expect("failed to call __collect");
+        Ok(())
     }
 }
 
