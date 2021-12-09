@@ -52,6 +52,18 @@ fn read_alloc_strings() -> Result<(), Box<dyn Error>> {
             Ok(func) => Some(func.clone()),
             _ => None,
         },
+        match instance.exports.get_function("__pin") {
+            Ok(func) => Some(func.clone()),
+            _ => None,
+        },
+        match instance.exports.get_function("__unpin") {
+            Ok(func) => Some(func.clone()),
+            _ => None,
+        },
+        match instance.exports.get_function("__collect") {
+            Ok(func) => Some(func.clone()),
+            _ => None,
+        },
     );
 
     let get_string = instance
@@ -94,13 +106,25 @@ fn read_write_strings() -> Result<(), Box<dyn Error>> {
             Ok(func) => Some(func.clone()),
             _ => None,
         },
+        match instance.exports.get_function("__pin") {
+            Ok(func) => Some(func.clone()),
+            _ => None,
+        },
+        match instance.exports.get_function("__unpin") {
+            Ok(func) => Some(func.clone()),
+            _ => None,
+        },
+        match instance.exports.get_function("__collect") {
+            Ok(func) => Some(func.clone()),
+            _ => None,
+        },
     );
 
     let get_string = instance
         .exports
         .get_native_function::<(), StringPtr>("getString")?;
 
-    let str_ptr = get_string.call()?;
+    let mut str_ptr = get_string.call()?;
     let string = str_ptr.read(memory)?;
 
     assert_eq!(string, "hello test");

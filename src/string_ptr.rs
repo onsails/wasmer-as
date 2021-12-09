@@ -1,8 +1,16 @@
 use super::{Env, Memory, Read, Write};
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use wasmer::{Array, Value, WasmPtr};
 
 pub type StringPtr = WasmPtr<u16, Array>;
+
+macro_rules! export_asr {
+    ($func_name:ident, $env:expr) => {
+        $env.$func_name
+            .as_ref()
+            .expect("Assembly Script Runtime not exported")
+    };
+}
 
 impl Read<String> for StringPtr {
     fn read(self, memory: &Memory) -> anyhow::Result<String> {
@@ -24,10 +32,7 @@ impl Read<String> for StringPtr {
 
 impl Write<String> for StringPtr {
     fn alloc(value: &str, env: &Env) -> anyhow::Result<Box<StringPtr>> {
-        let new = env
-            .new
-            .as_ref()
-            .expect("Assembly Script Runtime ot exported");
+        let new = export_asr!(fn_new, env);
         let size = i32::try_from(value.len())?;
 
         let offset = u32::try_from(
@@ -39,25 +44,51 @@ impl Write<String> for StringPtr {
                 .unwrap(),
         )?;
         write_str(offset, value, env)?;
+
+        // pin
+        let pin = export_asr!(fn_pin, env);
+        pin.call(&[Value::I32(offset.try_into().unwrap())])
+            .expect("Failed to call __pin");
+
         Ok(Box::new(StringPtr::new(offset)))
     }
 
-    fn write(&self, value: &str, env: &Env) -> anyhow::Result<()> {
+    fn write(&mut self, value: &str, env: &Env) -> anyhow::Result<Box<StringPtr>> {
         let prev_size = size(
             self.offset(),
             env.memory.get_ref().expect("Failed to load memory"),
         )?;
         let new_size = u32::try_from(value.len())? << 1;
         if prev_size == new_size {
-            write_str(self.offset(), value, env)?
+            write_str(self.offset(), value, env)?;
+            Ok(Box::new(*self))
         } else {
-            todo!("Remove this and reallocate of bigger or smaller space")
+            // unpin old ptr
+            let unpin = export_asr!(fn_pin, env);
+            unpin
+                .call(&[Value::I32(self.offset().try_into().unwrap())])
+                .expect("Failed to call __unpin");
+
+            // collect
+            let collect = export_asr!(fn_collect, env);
+            collect.call(&[]).expect("failed to call __collect");
+
+            // alloc with new size
+            StringPtr::alloc(value, env)
         }
-        Ok(())
     }
 
-    fn free(_env: &Env) -> anyhow::Result<()> {
-        todo!("Release the memory from this string")
+    fn free(self, env: &Env) -> anyhow::Result<()> {
+        // unpin
+        let unpin = export_asr!(fn_pin, env);
+        unpin
+            .call(&[Value::I32(self.offset().try_into().unwrap())])
+            .expect("Failed to call __unpin");
+
+        // collect
+        let collect = export_asr!(fn_collect, env);
+        collect.call(&[]).expect("failed to call __collect");
+        Ok(())
     }
 }
 
