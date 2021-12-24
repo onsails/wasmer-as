@@ -75,7 +75,7 @@ fn read_alloc_strings() -> Result<(), Box<dyn Error>> {
 
     assert_eq!(string, "hello test");
 
-    let str_ptr_2 = StringPtr::alloc("hello return", &env)?;
+    let str_ptr_2 = StringPtr::alloc(&"hello return".to_string(), &env)?;
     let string = str_ptr_2.read(memory)?;
     assert_eq!(string, "hello return");
 
@@ -129,7 +129,7 @@ fn read_write_strings() -> Result<(), Box<dyn Error>> {
 
     assert_eq!(string, "hello test");
 
-    str_ptr.write("hallo tast", &env)?;
+    str_ptr.write(&"hallo tast".to_string(), &env)?;
 
     let str_ptr_2 = get_string.call()?;
     let string = str_ptr_2.read(memory)?;

@@ -1,14 +1,13 @@
-use crate::tools::export_asr;
-
 use super::{Env, Memory, Read, Write};
-
 use std::convert::{TryFrom, TryInto};
 use wasmer::{Array, Value, WasmPtr, FromToNativeWasmType};
 
-#[derive(Clone, Copy)]
-pub struct StringPtr(WasmPtr<u16, Array>);
+use crate::tools::export_asr;
 
-impl StringPtr {
+#[derive(Clone, Copy)]
+pub struct BufferPtr(WasmPtr<u8, Array>);
+
+impl BufferPtr {
     fn new(offset: u32) -> Self {
         Self(WasmPtr::new(offset))
     }
@@ -17,7 +16,7 @@ impl StringPtr {
     }
 }
 
-unsafe impl FromToNativeWasmType for StringPtr {
+unsafe impl FromToNativeWasmType for BufferPtr {
     type Native = i32;
     fn to_native(self) -> Self::Native {
         self.offset() as i32
@@ -27,14 +26,13 @@ unsafe impl FromToNativeWasmType for StringPtr {
     }
 }
 
-impl Read<String> for StringPtr {
-    fn read(&self, memory: &Memory) -> anyhow::Result<String> {
+impl Read<Vec<u8>> for BufferPtr {
+    fn read(&self, memory: &Memory) -> anyhow::Result<Vec<u8>> {
         let size = self.size(memory)?;
         // we need size / 2 because assemblyscript counts bytes
         // while deref considers u16 elements
         if let Some(buf) = self.0.deref(memory, 0, size / 2) {
-            let input: Vec<u16> = buf.iter().map(|b| b.get()).collect();
-            Ok(String::from_utf16_lossy(&input))
+            Ok(buf.iter().map(|b| b.get()).collect())
         } else {
             anyhow::bail!("Wrong offset: can't read buf")
         }
@@ -45,8 +43,8 @@ impl Read<String> for StringPtr {
     }
 }
 
-impl Write<String> for StringPtr {
-    fn alloc(value: &String, env: &Env) -> anyhow::Result<Box<StringPtr>> {
+impl Write<Vec<u8>> for BufferPtr {
+    fn alloc(value: &Vec<u8>, env: &Env) -> anyhow::Result<Box<BufferPtr>> {
         let new = export_asr!(fn_new, env);
         let size = i32::try_from(value.len())?;
 
@@ -58,24 +56,18 @@ impl Write<String> for StringPtr {
                 .i32()
                 .unwrap(),
         )?;
-        write_str(offset, value, env)?;
-
-        // pin
-        let pin = export_asr!(fn_pin, env);
-        pin.call(&[Value::I32(offset.try_into().unwrap())])
-            .expect("Failed to call __pin");
-
-        Ok(Box::new(StringPtr::new(offset)))
+        write_buffer(offset, value, env)?;
+        Ok(Box::new(BufferPtr::new(offset)))
     }
 
-    fn write(&mut self, value: &String, env: &Env) -> anyhow::Result<Box<StringPtr>> {
+    fn write(&mut self, value: &Vec<u8>, env: &Env) -> anyhow::Result<Box<Self>> {
         let prev_size = size(
             self.offset(),
             env.memory.get_ref().expect("Failed to load memory"),
         )?;
         let new_size = u32::try_from(value.len())? << 1;
         if prev_size == new_size {
-            write_str(self.offset(), value, env)?;
+            write_buffer(self.offset(), value, env)?;
             Ok(Box::new(*self))
         } else {
             // unpin old ptr
@@ -89,35 +81,25 @@ impl Write<String> for StringPtr {
             collect.call(&[]).expect("failed to call __collect");
 
             // alloc with new size
-            StringPtr::alloc(value, env)
+            BufferPtr::alloc(value, env)
         }
     }
 
-    fn free(self, env: &Env) -> anyhow::Result<()> {
-        // unpin
-        let unpin = export_asr!(fn_pin, env);
-        unpin
-            .call(&[Value::I32(self.offset().try_into().unwrap())])
-            .expect("Failed to call __unpin");
-
-        // collect
-        let collect = export_asr!(fn_collect, env);
-        collect.call(&[]).expect("failed to call __collect");
-        Ok(())
+    fn free(self, _env: &Env) -> anyhow::Result<()> {
+        todo!("Release the memory from this string")
     }
 }
 
-fn write_str(offset: u32, value: &str, env: &Env) -> anyhow::Result<()> {
-    let utf16 = value.encode_utf16();
+fn write_buffer(offset: u32, value: &[u8], env: &Env) -> anyhow::Result<()> {
     let view = env
         .memory
         .get_ref()
         .expect("Failed to load memory")
-        .view::<u16>();
+        .view::<u8>();
     // We count in 32 so we have to devide by 2
     let from = usize::try_from(offset)? / 2;
-    for (bytes, cell) in utf16.into_iter().zip(view[from..from + value.len()].iter()) {
-        cell.set(bytes);
+    for (bytes, cell) in value.iter().zip(view[from..from + value.len()].iter()) {
+        cell.set(*bytes);
     }
     Ok(())
 }

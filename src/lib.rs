@@ -1,5 +1,6 @@
 mod env;
 mod string_ptr;
+mod buffer_ptr;
 mod tools;
 
 pub use env::Env;
@@ -15,8 +16,8 @@ pub trait Read<T> {
 }
 
 pub trait Write<T> {
-    fn alloc(value: &str, memory: &Env) -> anyhow::Result<Box<Self>>;
-    fn write(&mut self, value: &str, env: &Env) -> anyhow::Result<Box<Self>>;
+    fn alloc(value: &T, memory: &Env) -> anyhow::Result<Box<Self>>;
+    fn write(&mut self, value: &T, env: &Env) -> anyhow::Result<Box<Self>>;
     fn free(self, memory: &Env) -> anyhow::Result<()>;
 }
 
