@@ -1,8 +1,29 @@
 use super::{Env, Memory, Read, Write};
-use std::convert::{TryFrom, TryInto};
-use wasmer::{Array, Value, WasmPtr};
 
-pub type StringPtr = WasmPtr<u16, Array>;
+use std::convert::{TryFrom, TryInto};
+use wasmer::{Array, Value, WasmPtr, FromToNativeWasmType};
+
+#[derive(Clone, Copy)]
+pub struct StringPtr(WasmPtr<u16, Array>);
+
+impl StringPtr {
+    fn new(offset: u32) -> Self {
+        Self(WasmPtr::new(offset))
+    }
+    fn offset(&self) -> u32 {
+        self.0.offset()
+    }
+}
+
+unsafe impl FromToNativeWasmType for StringPtr {
+    type Native = i32;
+    fn to_native(self) -> Self::Native {
+        self.offset() as i32
+    }
+    fn from_native(n: Self::Native) -> Self {
+        Self::new(n as u32)
+    }
+}
 
 macro_rules! export_asr {
     ($func_name:ident, $env:expr) => {
@@ -13,11 +34,11 @@ macro_rules! export_asr {
 }
 
 impl Read<String> for StringPtr {
-    fn read(self, memory: &Memory) -> anyhow::Result<String> {
+    fn read(&self, memory: &Memory) -> anyhow::Result<String> {
         let size = self.size(memory)?;
         // we need size / 2 because assemblyscript counts bytes
         // while deref considers u16 elements
-        if let Some(buf) = self.deref(memory, 0, size / 2) {
+        if let Some(buf) = self.0.deref(memory, 0, size / 2) {
             let input: Vec<u16> = buf.iter().map(|b| b.get()).collect();
             Ok(String::from_utf16_lossy(&input))
         } else {
@@ -25,8 +46,8 @@ impl Read<String> for StringPtr {
         }
     }
 
-    fn size(self, memory: &Memory) -> anyhow::Result<u32> {
-        size(self.offset(), memory)
+    fn size(&self, memory: &Memory) -> anyhow::Result<u32> {
+        size(self.0.offset(), memory)
     }
 }
 
