@@ -5,6 +5,7 @@ mod tools;
 
 pub use env::Env;
 pub use string_ptr::StringPtr;
+pub use buffer_ptr::BufferPtr;
 pub use tools::abort;
 
 use std::fmt;

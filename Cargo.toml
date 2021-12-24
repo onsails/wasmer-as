@@ -1,14 +1,12 @@
 [package]
 name = "wasmer-as"
 version = "0.4.1-alpha.0"
-authors = ["Andrey Kuznetsov <fear@loathing.in>"]
-edition = "2018"
+authors = ["Adrien Zinger <zinger.ad@gmail.com>", "Yvan Sraka <yvan@sraka.xyz>", "Aurelia Dolo"]
+edition = "2021"
 license = "Apache-2.0"
 description = "Helpers to read and write memory in AssemblyScript wasm modules executing in wasmer-runtime"
 keywords = ["assemblyscript", "assembly-script", "wasm", "wasmer"]
-homepage = "https://github.com/onsails/wasmer-as"
-documentation = "https://github.com/onsails/wasmer-as"
-repository = "https://github.com/onsails/wasmer-as"
+repository = "https://github.com/adrien-zinger/wasmer-as"
 build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

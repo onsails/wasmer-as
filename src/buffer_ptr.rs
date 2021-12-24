@@ -11,7 +11,7 @@ impl BufferPtr {
     fn new(offset: u32) -> Self {
         Self(WasmPtr::new(offset))
     }
-    fn offset(&self) -> u32 {
+    pub fn offset(&self) -> u32 {
         self.0.offset()
     }
 }
@@ -29,9 +29,7 @@ unsafe impl FromToNativeWasmType for BufferPtr {
 impl Read<Vec<u8>> for BufferPtr {
     fn read(&self, memory: &Memory) -> anyhow::Result<Vec<u8>> {
         let size = self.size(memory)?;
-        // we need size / 2 because assemblyscript counts bytes
-        // while deref considers u16 elements
-        if let Some(buf) = self.0.deref(memory, 0, size / 2) {
+        if let Some(buf) = self.0.deref(memory, 0, size * 2) {
             Ok(buf.iter().map(|b| b.get()).collect())
         } else {
             anyhow::bail!("Wrong offset: can't read buf")
@@ -49,7 +47,7 @@ impl Write<Vec<u8>> for BufferPtr {
         let size = i32::try_from(value.len())?;
 
         let offset = u32::try_from(
-            new.call(&[Value::I32(size << 1), Value::I32(1)])
+            new.call(&[Value::I32(size), Value::I32(0)])
                 .expect("Failed to call __new")
                 .get(0)
                 .unwrap()
@@ -65,7 +63,7 @@ impl Write<Vec<u8>> for BufferPtr {
             self.offset(),
             env.memory.get_ref().expect("Failed to load memory"),
         )?;
-        let new_size = u32::try_from(value.len())? << 1;
+        let new_size = u32::try_from(value.len())?;
         if prev_size == new_size {
             write_buffer(self.offset(), value, env)?;
             Ok(Box::new(*self))
@@ -111,7 +109,7 @@ fn size(offset: u32, memory: &Memory) -> anyhow::Result<u32> {
     // read -4 offset
     // https://www.assemblyscript.org/memory.html#internals
     if let Some(cell) = memory.view::<u32>().get(offset as usize / (32 / 8) - 1) {
-        Ok(cell.get())
+        Ok(cell.get() / 2)
     } else {
         anyhow::bail!("Wrong offset: can't read size")
     }
